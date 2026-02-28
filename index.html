@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ball Pit</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: black;
+        }
+        
+        * {
+            cursor: default !important;
+        }
+    </style>
+</head>
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+
+    <script>
+        (function() {
+            const E = Matter.Engine;
+            const R = Matter.Render;
+            const W = Matter.World;
+            const B = Matter.Bodies;
+            const BD = Matter.Body;
+            const RN = Matter.Runner;
+            const M = Matter.Mouse;
+            const MC = Matter.MouseConstraint;
+            const Q = Matter.Query;
+
+            const eng = E.create();
+            eng.gravity.y = 0.25; 
+            const w = eng.world;
+
+            const cw = window.innerWidth;
+            const ch = window.innerHeight;
+
+            const ren = R.create({
+                element: document.body,
+                engine: eng,
+                options: {
+                    width: cw,
+                    height: ch,
+                    wireframes: false,
+                    background: 'black',
+                    pixelRatio: window.devicePixelRatio
+                }
+            });
+            R.run(ren);
+
+            const run = RN.create();
+            RN.run(run, eng);
+
+            let g, lw, rw;
+
+            function cW(wid, hei) {
+                const wOpt = { 
+                    isStatic: true, 
+                    restitution: 0.6,
+                    friction: 0.3,
+                    render: { fillStyle: 'transparent', strokeStyle: 'transparent' }
+                };
+                g = B.rectangle(wid / 2, hei + 50, wid, 100, wOpt);
+                lw = B.rectangle(-50, hei / 2, 100, hei, wOpt);
+                rw = B.rectangle(wid + 50, hei / 2, 100, hei, wOpt);
+                return [g, lw, rw];
+            }
+
+            W.add(w, cW(cw, ch));
+
+            const tU = [
+                'https://i.ibb.co/SDd1s3t0/blue.png',
+                'https://i.ibb.co/Pz69SqW4/green-1.png',
+                'https://i.ibb.co/N0rgrBh/purple.png',
+                'https://i.ibb.co/XfSXV3Ng/red-1.png',
+                'https://i.ibb.co/FLp2K7M9/yellow-1.png',
+                'https://i.ibb.co/bMcmdFcB/green-D.png',
+                'https://i.ibb.co/ynbk34tG/pink-D.png',
+                'https://i.ibb.co/60KMZJTK/spider.png',
+                'https://i.ibb.co/KjFNbSQ7/teleport.png',
+                'https://i.ibb.co/84d8QTNJ/black.png'
+            ]; // orbs color
+
+            const cT = 'https://i.ibb.co/nsM9PG6z/cube.png';
+
+            tU.forEach(url => new Image().src = url);
+            new Image().src = cT;
+
+            function aRB() {
+                const tex = tU[Math.floor(Math.random() * tU.length)];
+                const vR = 10 + Math.random() * 12;
+                const pR = vR * 2.0;
+                
+                const x = pR + 10 + Math.random() * (cw - 2 * (pR + 10));
+                const y = -pR * 2 - Math.random() * 80;
+
+                const curW = window.innerWidth;
+                const ax = Math.min(curW - pR - 10, Math.max(pR + 10, x));
+
+                const b = B.circle(ax, y, pR, {
+                    restitution: 0.4 + Math.random() * 0.5,
+                    friction: 0.1,
+                    density: 0.0015,
+                    render: {
+                        sprite: {
+                            texture: tex,
+                            xScale: (vR * 2) / 100, 
+                            yScale: (vR * 2) / 100
+                        }
+                    }
+                });
+
+                BD.setAngularVelocity(b, (Math.random() - 0.5) * 0.02);
+                return b;
+            }
+
+            function aRC() {
+                const vS = 20 + Math.random() * 20;
+                let pW = vS * 2.5 - 14;
+                let pH = vS * 2.5 - 14;
+                
+                pW = Math.max(pW, vS);
+                pH = Math.max(pH, vS);
+                
+                const x = pW/2 + 10 + Math.random() * (cw - pW - 20);
+                const y = -pH - Math.random() * 80;
+
+                const curW = window.innerWidth;
+                const ax = Math.min(curW - pW/2 - 10, Math.max(pW/2 + 10, x));
+
+                const c = B.rectangle(ax, y, pW, pH, {
+                    restitution: 0.3 + Math.random() * 0.4,
+                    friction: 0.2,
+                    density: 0.002,
+                    render: {
+                        sprite: {
+                            texture: cT,
+                            xScale: vS / 100,
+                            yScale: vS / 100
+                        }
+                    }
+                });
+
+                BD.setAngularVelocity(c, (Math.random() - 0.5) * 0.03);
+                return c;
+            }
+
+            function aRO() {
+                if (Math.random() < 0.9) {
+                    return aRB();
+                } else {
+                    return aRC();
+                }
+            }
+
+            setInterval(() => {
+                const o = aRO();
+                W.add(w, o);
+            }, 1000);
+
+            let sP = false;
+            
+            function aON() {
+                const o = aRO();
+                W.add(w, o);
+            }
+
+            window.addEventListener('keydown', (e) => {
+                if (e.code === 'Space' && !sP) {
+                    e.preventDefault();
+                    sP = true;
+                    aON();
+                    window.sI = setInterval(aON, 10);
+                }
+            });
+
+            window.addEventListener('keyup', (e) => {
+                if (e.code === 'Space') {
+                    e.preventDefault();
+                    sP = false;
+                    clearInterval(window.sI);
+                }
+            });
+
+            window.addEventListener('keydown', (e) => {
+                if (e.code === 'Space') {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+
+            window.addEventListener('resize', function() {
+                const nW = window.innerWidth;
+                const nH = window.innerHeight;
+
+                ren.canvas.width = nW;
+                ren.canvas.height = nH;
+                ren.options.width = nW;
+                ren.options.height = nH;
+
+                W.remove(w, [g, lw, rw]);
+
+                const wOpt = { 
+                    isStatic: true, 
+                    restitution: 0.6,
+                    friction: 0.3,
+                    render: { fillStyle: 'transparent', strokeStyle: 'transparent' }
+                };
+                g = B.rectangle(nW / 2, nH + 50, nW, 100, wOpt);
+                lw = B.rectangle(-50, nH / 2, 100, nH, wOpt);
+                rw = B.rectangle(nW + 50, nH / 2, 100, nH, wOpt);
+
+                W.add(w, [g, lw, rw]);
+            });
+
+            const m = M.create(ren.canvas);
+            const mC = MC.create(eng, {
+                mouse: m,
+                constraint: { 
+                    stiffness: 0.2, 
+                    render: { visible: false } 
+                }
+            });
+            
+            W.add(w, mC);
+            ren.mouse = m;
+
+            ren.canvas.addEventListener('mousedown', function(e) {
+                if (e.button === 2) {
+                    e.preventDefault();
+                    
+                    const mP = {
+                        x: e.offsetX,
+                        y: e.offsetY
+                    };
+                    
+                    const bUM = Q.point(w.bodies, mP);
+                    const nSB = bUM.filter(bd => !bd.isStatic);
+                    
+                    if (nSB.length > 0) {
+                        W.remove(w, nSB[0]);
+                    }
+                }
+            });
+
+            ren.canvas.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+            });
+
+        })();
+    </script>
+</body>
+</html>
